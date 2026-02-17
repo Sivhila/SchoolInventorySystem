@@ -10,7 +10,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.config["SECRETE_KEY"] = os.getenv("Inventory_Key")
+app.secret_key = os.getenv("Inventory_Key")
 app.config["ENV"] = "production"
 app.config["DEBUG"] = False
 app.config["SESSION_TYPE"] = os.getenv("SESSION_TYPE")
@@ -403,3 +403,5 @@ def overdue_items():
 
 init_db()
 
+if __name__ == "__main__":
+    app.run()
