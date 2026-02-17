@@ -17,6 +17,25 @@ app.config["SESSION_TYPE"] = os.getenv("SESSION_TYPE")
 DATABASE = os.getenv("DATABASE")
 
 
+def create_admin():
+    db = get_db()
+    admin = db.execute(
+            "SELECT * FROM users WHERE username = 'admin'"
+            ).fetchone()
+
+    if not admin:
+        db.execute("""
+        INSERT INTO users (username, password_hash, role)
+        VALUES (?, ?, ?)
+        """, ("admin", generate_password_hash("admin123"), "admin"))
+
+        db.commit()
+
+        print("Admin user created")
+
+create_admin()
+
+
 def get_db():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
