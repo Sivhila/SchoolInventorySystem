@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<table class="table table-danger">
+	<tr>
+		<th>Item</th><th>User</th><th>Qty</th><th>Due Date</th>
+	</tr>
+	{% for o in overdue %}
+	<tr>
+		<td>{{ o.name }}</td>
+		<td>{{ o.username }}</td>
+		<td>{{ o.issued_quantity }}</td>
+		<td>{{ o.due_date }}</td>
+	</tr>
+	{% endfor %}
+</table>
+
+{% endblock %}

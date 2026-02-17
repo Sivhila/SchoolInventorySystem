@@ -1,0 +1,147 @@
+/* Global */
+
+body {
+	font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+	background: linear-gradient(135deg, #f4f7fb, #e9eef5);
+	min-height: 100vh;
+}
+
+
+.container {
+	max-width: 1100px;
+}
+
+/* Navbar */
+
+.navbar {
+	border-radius: 12px;
+	box-shadow: 0 4px 14px rgba(0,0,0,.08);
+}
+
+.navbar h4 {
+	color: #fff;
+	margin-right: 15px;
+}
+
+/* Cards */
+
+.card {
+	border: none;
+	border-radius: 16px;
+	box-shadow: 0 8px 24px rgba(0,0,0,.06);
+	transition: transform .2s ease;
+}
+
+.card:hover {
+	transform: translateY(-3px);
+}
+
+.card-title {
+	font-weight: 600;
+	color: #333;
+}
+
+/* Buttons */
+
+.btn {
+	border-radius: 10px;
+	padding: 8px 16px;
+	font-weight: 500;
+}
+
+.btn-primary {
+	background: linear-gradient(135deg, #4f46e5, #3b82f6);
+	border: none;
+}
+
+.btn-success {
+	background: linear-gradient(135deg, #22c55e, #16a34a);
+	border: none;
+}
+
+.btn-danger {
+	background: linear-gradient(135deg, #ef4444, #dc2626);
+	border: none;
+}
+
+.btn-outline-light {
+	border-radius: 20px;
+}
+
+/* Forms */
+
+.form-control, .form-select {
+	border-radius: 10px;
+	padding: 10px;
+	border: 1px solid #ddd;
+}
+
+.form-control:focus, .form-select:focus {
+	box-shadow: 0 0 0 0.2rem rgba(59,130,246,.15);
+	border-color: #3b82f6;
+}
+
+label {
+	font-weight: 500;
+}
+
+															/* Tables */
+
+															.table {
+																background: #fff;
+																border-radius: 14px;
+																overflow: hidden;
+																box-shadow: 0 6px 18px rgba(0,0,0,.05);
+															}
+
+.table th {
+	background: #f1f5f9;
+	font-weight: 600;
+}
+
+															.table td, .table th {
+																vertical-align: middle;
+															}
+
+															/* Alerts */
+															.alert {
+																border-radius: 12px;
+															}
+
+															/* Dashboard stats */
+															.stat-card {
+																padding: 20px;
+																text-align: center;
+															}
+
+.stat-number {
+	font-size: 32px;
+	font-weight: 700;
+}
+
+.stat-label {
+	color: #555;
+}
+
+															/* Auth pages */
+
+.auth-card {
+	max-width: 420px;
+	margin: 80px auto;
+}
+
+															/* ===== Links ===== */
+
+a {
+	text-decoration: none;
+															}
+
+a:hover {
+	text-decoration: underline;
+}
+
+															/* Footer spacing */
+
+.mb-4 {
+	margin-bottom: 1.5rem;
+}

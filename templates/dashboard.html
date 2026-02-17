@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="row text-center">
+	  <div class="col-md-3"><div class="card p-3">Items<br><h3>{{ total_items }}</h3></div></div>
+	  <div class="col-md-3"><div class="card p-3">Low Stock<br><h3>{{ low_stock }}</h3></div></div>
+	  <div class="col-md-3"><div class="card p-3">Active Issues<br><h3>{{ active_issues }}</h3></div></div>
+	  <div class="col-md-3"><div class="card p-3 text-danger">Overdue<br><h3>{{ overdue }}</h3></div></div>
+</div>
+
+<h5 class="mt-4">Recent Activity</h5>
+<table class="table table-sm">
+	<tr><th>Action</th><th>Details</th><th>Time</th></tr>
+	{% for log in recent_logs %}
+	<tr>
+		<td>{{ log.action }}</td>
+		<td>{{ log.details }}</td>
+		<td>{{ log.created_at }}</td>
+	</tr>
+	{% endfor %}
+</table>
+
+{% endblock %}

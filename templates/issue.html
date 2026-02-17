@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<form method="post" class="row g-2 mb-4">
+
+	<select class="form-select col" name="item_id" required>
+		{% for i in items %}
+		<option value="{{ i.id }}">{{ i.name }} ({{ i.available_quantity }})</option>
+		{% endfor %}
+	</select>
+
+	<select class="form-select col" name="user_id" required>
+		{% for u in users %}
+		<option value="{{ u.id }}">{{ u.username }}</option>
+		{% endfor %}
+	</select>
+
+	<input class="form-control col" type="number" name="quantity" placeholder="Qty" required>
+
+	<input class="form-control col" type="date" name="due_date" required>
+
+	<button class="btn btn-success col">Issue</button>
+
+</form>
+
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<table class="table table-sm">
+	<tr><th>User</th><th>Action</th><th>Details</th><th>Time</th></tr>
+	{% for l in logs %}
+	<tr>
+		<td>{{ l.username }}</td>
+		<td>{{ l.action }}</td>
+		<td>{{ l.details }}</td>
+		<td>{{ l.created_at }}</td>
+	</tr>
+	{% endfor %}
+</table>
+
+{% endblock %}
