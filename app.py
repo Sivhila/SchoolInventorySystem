@@ -17,6 +17,10 @@ app.config["SESSION_TYPE"] = os.getenv("SESSION_TYPE")
 DATABASE = os.getenv("DATABASE")
 
 
+def get_db():
+    return sqlite3.connect("inventory.db")
+
+
 def create_admin():
     db = get_db()
     admin = db.execute(
@@ -31,16 +35,9 @@ def create_admin():
 
         db.commit()
 
-        print("Admin user created")
+with app.app_context():
+    create_admin()
 
-create_admin()
-
-
-def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON;")
-    return conn
 
 def log_action(user_id, action, details=""):
     db = get_db()
