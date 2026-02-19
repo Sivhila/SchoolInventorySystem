@@ -18,9 +18,11 @@ DATABASE = os.getenv("DATABASE")
 
 
 def get_db():
-    conn = sqlite3.connect("inventory.db")
-    conn.row_factory = sqlite3.Row
-    return conn
+    if "db" not in g:
+        g.db = sqlite3.connect("inventory.db")
+        g.db.row_factory = sqlite3.Row
+        g.db.execute("PRAGMA foreign_keys = ON")
+    return g.db
 
 
 def create_admin():
@@ -123,9 +125,17 @@ def register():
         hashed = generate_password_hash(password)
 
         db = get_db()
+
+        existing = db.execute(
+                "SELECT id FROM users WHERE username = ?",
+                (username,)
+                ).fetchone()
+        if existing:
+            flash("Username already exists")
+            return redirect("/register")
         db.execute(
         "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-        (username, generate_password_hash(password), role)
+        (username, hashed, role)
         )
         db.commit()
 
