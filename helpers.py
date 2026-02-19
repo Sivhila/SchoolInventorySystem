@@ -9,7 +9,7 @@ DB_NAME = "inventory.db"
 
 
 def init_db():
-    db = get_db()
+    db = sqlite3.connect("inventory.db")
 
     db.execute("""
     CREATE TABLE IF NOT EXISTS users (
