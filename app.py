@@ -18,13 +18,17 @@ DATABASE = os.getenv("DATABASE")
 
 
 def get_db():
-    return sqlite3.connect("inventory.db")
+    conn = sqlite3.connect("inventory.db")
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def create_admin():
     db = get_db()
+
     admin = db.execute(
-            "SELECT * FROM users WHERE username = 'admin'"
+            "SELECT * FROM users WHERE username = ?",
+            ("admin",)
             ).fetchone()
 
     if not admin:
@@ -35,8 +39,8 @@ def create_admin():
 
         db.commit()
 
-with app.app_context():
-    create_admin()
+    db.close()
+
 
 
 def log_action(user_id, action, details=""):
@@ -417,7 +421,9 @@ def overdue_items():
 
 
 
-init_db()
+with app.app_context():
+    init_db()
+    create_admin()
 
 if __name__ == "__main__":
     app.run()
