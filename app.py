@@ -1,9 +1,10 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, session
+import os
+import psycopg2
+import psycopg2.extras
+from flask import Flask, render_template, redirect, url_for, request, flash, session, g
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 from helpers import init_db, admin_required
-import sqlite3
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,45 +15,42 @@ app.secret_key = os.getenv("Inventory_Key")
 app.config["ENV"] = "production"
 app.config["DEBUG"] = False
 app.config["SESSION_TYPE"] = os.getenv("SESSION_TYPE")
-DATABASE = os.getenv("DATABASE")
 
 
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect("inventory.db")
-        g.db.row_factory = sqlite3.Row
-        g.db.execute("PRAGMA foreign_keys = ON")
+        g.db = psycopg2.connect(os.getenv("DATABASE"))
     return g.db
 
+def get_cursor(db):
+    return db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 def create_admin():
     db = get_db()
+    cur = get_cursor(db)
 
-    admin = db.execute(
-            "SELECT * FROM users WHERE username = ?",
-            ("admin",)
-            ).fetchone()
+    cur.execute("SELECT * FROM users WHERE username = %s", ("admin",))
+    admin = cur.fetchone()
 
     if not admin:
-        db.execute("""
+        cur.execute("""
         INSERT INTO users (username, password_hash, role)
-        VALUES (?, ?, ?)
+        VALUES (%s, %s, %s)
         """, ("admin", generate_password_hash("admin123"), "admin"))
 
         db.commit()
 
-    db.close()
-
-
+    cur.close()
 
 def log_action(user_id, action, details=""):
     db = get_db()
-    db.execute("""
+    cur = get_cursor(db)
+    cur.execute("""
     INSERT INTO activity_logs (user_id, action, details)
-    VALUES (?, ?, ?)
+    VALUES (%s, %s, %s)
     """, (user_id, action, details))
     db.commit()
-
+    cur.close
 
 #Login Required Decorator
 def login_required(f):
@@ -62,7 +60,6 @@ def login_required(f):
             return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated_function
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -82,13 +79,12 @@ def login():
             return redirect("/login")
 
         db = get_db()
-        user = db.execute(
-                "SELECT * FROM users WHERE username = ?",
-                (username,)
-                ).fetchone()
+        cur = get_cursor(db)
+        cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cur.fetchone()
+        cur.close()
 
-        if user is None or not check_password_hash(
-                user["password_hash"], password):
+        if user is None or not check_password_hash(user["password_hash"], password):
             flash("Invalid username or password")
             return redirect("/login")
 
@@ -123,21 +119,23 @@ def register():
             return redirect("/register")
 
         hashed = generate_password_hash(password)
-
         db = get_db()
+        cur = get_cursor(db)
 
-        existing = db.execute(
-                "SELECT id FROM users WHERE username = ?",
-                (username,)
-                ).fetchone()
+        cur.execute("SELECT id FROM users WHERE username = %s", (username,))
+        existing = cur.fetchone()
+
         if existing:
             flash("Username already exists")
+            cur.close()
             return redirect("/register")
-        db.execute(
-        "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+        
+        cur.execute(
+        "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
         (username, hashed, role)
         )
         db.commit()
+        cur.close()
 
         flash("Account created successfully")
         return redirect("/login")
@@ -149,27 +147,28 @@ def register():
 @app.route("/change_password", methods=["GET","POST"])
 @login_required
 def change_password():
-    db = get_db()
-
     if request.method == "POST":
         current = request.form["current"]
         new = request.form["new"]
 
-        user = db.execute(
-                "SELECT password_hash FROM users WHERE id = ?",
-                (session["user_id"],)
-                ).fetchone()
+        db = get_db()
+        cur = get_cursor(db)
+        
+        cur.execute("SELECT password_hash FROM users WHERE id = %s", (session["user_id"],))
+        user = cur.fetchone()
 
         if not check_password_hash(user["password_hash"], current):
             flash("Wrong current password")
-            return redirect("/change-password")
+            cur.close()
+            return redirect("/change_password")
 
-        db.execute(
-                "UPDATE users SET password_hash = ? WHERE id = ?",
+        cur.execute(
+                "UPDATE users SET password_hash = %s WHERE id = %s",
                 (generate_password_hash(new), session["user_id"])
                 )
 
         db.commit()
+        cur.close()
         flash("Password updated successfully")
 
     return render_template("change_password.html")
@@ -180,31 +179,28 @@ def change_password():
 @login_required
 def dashboard():
     db = get_db()
+    cur = get_cursor(db)
 
-    total_items = db.execute("SELECT COUNT(*) FROM items").fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM items")
+    total_items = cur.fetchone()[0]
 
-    low_stock = db.execute("""
-    SELECT COUNT(*) FROM items
-    WHERE available_quantity <= 3
-    """).fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM items WHERE available_quantity <= 3")
+    low_stock = cur.fetchone()[0]
 
-    active_issues = db.execute("""
-    SELECT COUNT(*) FROM issues
-    WHERE status = 'issued'
-    """).fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM issues WHERE status = 'issued'")
+    active_issues = cur.fetchone()[0]
 
-    overdue = db.execute("""
-    SELECT COUNT(*) FROM issues
-    WHERE status = 'issued'
-    AND due_date < CURRENT_TIMESTAMP
-    """).fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM issues WHERE status = 'issued' AND due_date < CURRENT_TIMESTAMP")
+    overdue = cur.fetchone()[0]
 
-    recent_logs = db.execute("""
+    cur.execute("""
     SELECT action, details, created_at
     FROM activity_logs
     ORDER BY created_at DESC
     LIMIT 5
-    """).fetchall()
+    """)
+    recent_logs = cur.fetchall()
+    cur.close()
 
     return render_template(
             "dashboard.html",
@@ -216,11 +212,11 @@ def dashboard():
             )
 
 
-
 @app.route("/items", methods=["GET", "POST"])
 @login_required
 def items():
     db = get_db()
+    cur = get_cursor(db)
 
     if request.method == "POST":
         name = request.form["name"]
@@ -228,39 +224,38 @@ def items():
         qty = int(request.form["quantity"])
         condition = request.form["condition"]
 
-        db.execute("""
+        cur.execute("""
         INSERT INTO items (name, category, total_quantity, available_quantity, item_condition
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
         """, (name, category, qty, qty, condition)
         )
 
         db.commit()
 
-        log_action(
-                session["user_id"],
-                "ADD_ITEM",
-                f"Added item '{name}' quantity {qty}"
-                )
+        log_action(session["user_id"], "ADD_ITEM", f"Added item '{name}' quantity {qty}")
         flash("Item added successfully")
 
-    items = db.execute("SELECT * FROM items").fetchall()
+    cur.execute("SELECT * FROM items")
+    items = cur.fetchall()
+    cur.close()
+
     return render_template("items.html", items=items)
-
-
 
 @app.route("/issue", methods=["GET", "POST"])
 @login_required
 @admin_required
 def issue_item():
     db = get_db()
+    cur = get_cursor(db)
 
     if request.method == "POST":
         item_id = int(request.form["item_id"])
         user_id = int(request.form["user_id"])
         qty = int(request.form["quantity"])
-        due_date = request.form["date_date"]
+        due_date = request.form["due_date"]
 
-        item = db.execute("SELECT available_quantity FROM items WHERE id = ?", (item_id,)).fetchone()
+        cur.execute("SELECT available_quantity FROM items WHERE id = %s", (item_id,))
+        items = cur.fetchone()
 
         if not item:
             flash("Item not found")
@@ -278,77 +273,78 @@ def issue_item():
             flash("Please select a due date")
             return redirect("/issue")
 
-        db.execute("""
-        INSERT INTO issues (items_id, issued_to, issued_quantity, status)
-        VALUES (?, ?, ?, "issued", ?)
+        cur.execute("""
+        INSERT INTO issues (items_id, issued_to, issued_quantity, status, due_date)
+        VALUES (%s, %s, %s, "issued", %s)
         """, (item_id, user_id, qty, due_date))
 
-        db.execute("""
+        cur.execute("""
         UPDATE items
-        SET available_quantity = available_quantity - ?
-        WHERE id = ?
+        SET available_quantity = available_quantity - %s
+        WHERE id = %s
         """, (qty, item_id))
 
         db.commit()
-
-        log_action(
-                session["user_id"],
-                "ISSUE_ITEM",
-                f"Issued {qty} of '{item['name']}' to user {user_id}"
-                )
+        log_action(session["user_id"], "ISSUE_ITEM", f"Issued {qty} of '{item['name']}' to user {user_id}")
 
         flash("Item issued successfully")
 
-    items = db.execute("SELECT * FROM items").fetchall()
-    users = db.execute("SELECT * FROM users").fetchall()
+    cur.execute("SELECT * FROM items")
+    items = cur.fetchall()
+    
+    cur.execute("SELECT * FROM users")
+    users = cur.fetchall()
+    
+    cur.close()
 
     return render_template("issue.html", items=items, users=users)
-
 
 
 @app.route("/delete_item/<int:item_id>")
 @login_required
 def delete_item(item_id):
     db = get_db()
+    cur = get_cursor(db)
 
-    active = db.execute("""
+    cur.execute("""
     SELECT COUNT(*) AS total
     FROM issues
-    WHERE item_id = ? AND status = "issued"
-    """, (item_id,)).fetchone()
+    WHERE item_id = %s AND status = "issued"
+    """, (item_id,))
+    active = cur.fetchone()
 
     if active["total"] > 0:
         flash("Cannot delete item - it has issues")
         return redirect("/items")
 
-    item = db.execute("SELECT name FROM items WHERE id = ?", (item_id,)).fetchone()
+    cur.execute("SELECT name FROM items WHERE id = %s", (item_id,))
+    item = cur.fetchone()
 
-    db.execute("DELECT FROM items WHERE id = ?", (item_id,))
+    cur.execute("DELETE FROM items WHERE id = %s", (item_id,))
     db.commit()
 
-    log_action(
-            session["user_id"],
-            "DELETE_ITEM",
-            f"Deleted item '{item['name']}'"
-            )
+    log_action(session["user_id"], "DELETE_ITEM", f"Deleted item '{item['name']}'")
+    
     flash("Item deleted successfully")
     return redirect("/items")
-
 
 
 @app.route("/logs")
 @login_required
 def logs():
     db = get_db()
-    logs = db.execute("""
+    cur = get_cursor(db)
+
+    cur.execute("""
     SELECT activity_logs.*, users.username
     FROM activity_logs
     LEFT JOIN users ON users.id = activity_logs.user_id
     ORDER BY created_at DESC
-    """).fetchall()
+    """)
+    logs = cur.fetchall()
+    cur.close()
     
     return render_template("logs.html", logs=logs)
-
 
 
 @app.route("/return/<int:issue_id>")
@@ -356,68 +352,69 @@ def logs():
 @admin_required
 def return_item(issue_id):
     db = get_db()
+    cur = get_cursor(db)
 
-    issue = db.execute("""
+    cur.execute("""
     SELECT issues.*, items.name
     FROM issues
     JOIN items ON items.id = issues.item_id
-    WHERE issues.id = ? AND issues.status = "issued"
-    """, (issue_id,)).fetchone()
+    WHERE issues.id = %s AND issues.status = "issued"
+    """, (issue_id,))
+    issue = cur.fetchone()
 
     if not issue:
         flash("Issue not found or already returned")
-        return redirect("/dashboard")
+        cur.close()
+        return redirect("/")
 
-    db.execute("""
+    cur.execute("""
     UPDATE items
-    SET available_quantity = available_quantity + ?
-    WHERE id = ?
+    SET available_quantity = available_quantity + %s
+    WHERE id = %s
     """, (issue['issued_quantity'], issue['item_id']))
 
-    db.execute("""
+    cur.execute("""
     UPDATE issues
-    SET status = "returned",
+    SET status = 'returned',
     return_date = CURRENT_TIMESTAMP
-    WHERE id = ?
+    WHERE id = %s
     """, (issue_id,))
 
     db.commit()
+    cur.close()
 
-    log_action(
-            session["user_id"],
-            "RETURN_ITEM",
-            f"Returned {issue['issued_quantity']} of '{issue['name']}'"
-            )
-
+    log_action(session["user_id"], "RETURN_ITEM", f"Returned {issue['issued_quantity']} of '{issue['name']}'")
     flash("Item returned successfully")
     return redirect("/")
-
 
 
 @app.route("/active_issues")
 @login_required
 def active_issues():
     db = get_db()
+    cur = get_cursor(db)
 
-    issues = db.execute("""
+    cur.execute("""
     SELECT issues.*, items.name, users.username
     FROM issues
     JOIN items ON items.id = issues.item_id
     JOIN users ON users.id = issues.issued_to
     WHERE issues.status = 'issued'
     ORDER BY issue_date DESC
-    """).fetchall()
+    """)
+    issues = cur.fetchall()
+    cur.close()
 
     return render_template("active_issues.html", issues=issues)
-
 
 
 @app.route("/overdue")
 @login_required
 def overdue_items():
     db = get_db()
+    cur = get_cursor(db)
 
-    overdue = db.execute("""
+    cur.execute("""
     SELECT issues.*, items.name, users.username
     FROM issues
     JOIN items ON items.id = issues.item_id
@@ -425,10 +422,11 @@ def overdue_items():
     WHERE issues.status = 'issued'
     AND issues.due_date < CURRENT_TIMESTAMP
     ORDER BY issues.due_date ASC
-    """).fetchall()
+    """)
+    overdue = cur.fetchall()
+    cur.close
 
     return render_template("overdue.html", overdue=overdue)
-
 
 
 with app.app_context():
@@ -437,3 +435,4 @@ with app.app_context():
 
 if __name__ == "__main__":
     app.run()
+
