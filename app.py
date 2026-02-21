@@ -225,7 +225,7 @@ def items():
         condition = request.form["condition"]
 
         cur.execute("""
-        INSERT INTO items (name, category, total_quantity, available_quantity, item_condition
+        INSERT INTO items (name, category, total_quantity, available_quantity, item_condition)
         VALUES (%s, %s, %s, %s, %s)
         """, (name, category, qty, qty, condition)
         )
