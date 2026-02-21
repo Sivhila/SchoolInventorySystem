@@ -19,7 +19,7 @@ app.config["SESSION_TYPE"] = os.getenv("SESSION_TYPE")
 
 def get_db():
     if "db" not in g:
-        g.db = psycopg2.connect(os.getenv("DATABASE"))
+        g.db = psycopg2.connect(os.getenv("DATABASE_URL"))
     return g.db
 
 def get_cursor(db):
