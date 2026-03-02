@@ -275,7 +275,7 @@ def issue_item():
 
         cur.execute("""
         INSERT INTO issues (item_id, issued_to, issued_quantity, status, due_date)
-        VALUES (%s, %s, %s, "issued", %s)
+        VALUES (%s, %s, %s, 'issued', %s)
         """, (item_id, user_id, qty, due_date))
 
         cur.execute("""
