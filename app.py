@@ -257,7 +257,7 @@ def issue_item():
         cur.execute("SELECT available_quantity FROM items WHERE id = %s", (item_id,))
         items = cur.fetchone()
 
-        if not item:
+        if not items:
             flash("Item not found")
             return redirect("/issue")
 
@@ -265,7 +265,7 @@ def issue_item():
             flash("Invalid quantity")
             return redirect("/issue")
 
-        if item["available_quantity"] < qty:
+        if items["available_quantity"] < qty:
             flash("Cannot issue more than available stock")
             return redirect("/issue")
 
@@ -287,7 +287,7 @@ def issue_item():
         db.commit()
         log_action(session["user_id"], "ISSUE_ITEM", f"Issued {qty} of '{item['name']}' to user {user_id}")
 
-        flash("Item issued successfully")
+        flash("Items issued successfully")
 
     cur.execute("SELECT * FROM items")
     items = cur.fetchall()
