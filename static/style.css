@@ -6,7 +6,6 @@ body {
 	min-height: 100vh;
 }
 
-
 .container {
 	max-width: 1100px;
 }
@@ -87,32 +86,34 @@ label {
 
 															/* Tables */
 
-															.table {
-																background: #fff;
-																border-radius: 14px;
-																overflow: hidden;
-																box-shadow: 0 6px 18px rgba(0,0,0,.05);
-															}
+.table {
+	background: #fff;
+	border-radius: 14px;
+	overflow: hidden;
+	box-shadow: 0 6px 18px rgba(0,0,0,.05);
+}
 
 .table th {
 	background: #f1f5f9;
 	font-weight: 600;
 }
 
-															.table td, .table th {
-																vertical-align: middle;
-															}
+.table td, .table th {
+	vertical-align: middle;
+}
 
-															/* Alerts */
-															.alert {
-																border-radius: 12px;
-															}
+/* Alerts */
 
-															/* Dashboard stats */
-															.stat-card {
-																padding: 20px;
-																text-align: center;
-															}
+.alert {
+	border-radius: 12px;
+}
+
+/* Dashboard stats */
+
+.stat-card {
+	padding: 20px;
+	text-align: center;
+}
 
 .stat-number {
 	font-size: 32px;
@@ -123,24 +124,24 @@ label {
 	color: #555;
 }
 
-															/* Auth pages */
+/* Auth pages */
 
 .auth-card {
 	max-width: 420px;
 	margin: 80px auto;
 }
 
-															/* ===== Links ===== */
+/* ===== Links ===== */
 
 a {
 	text-decoration: none;
-															}
+}
 
 a:hover {
 	text-decoration: underline;
 }
 
-															/* Footer spacing */
+/* Footer spacing */
 
 .mb-4 {
 	margin-bottom: 1.5rem;
