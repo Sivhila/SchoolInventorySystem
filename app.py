@@ -148,8 +148,8 @@ def register():
 @login_required
 def change_password():
     if request.method == "POST":
-        current = request.form["current"]
-        new = request.form["new"]
+        current = request.form["password"]
+        new = request.form["new_password"]
 
         db = get_db()
         cur = get_cursor(db)
