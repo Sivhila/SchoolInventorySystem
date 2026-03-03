@@ -170,6 +170,7 @@ def change_password():
         db.commit()
         cur.close()
         flash("Password updated successfully")
+        return redirect("/")
 
     return render_template("change_password.html")
 
@@ -310,7 +311,7 @@ def delete_item(item_id):
     cur.execute("""
     SELECT COUNT(*) AS total
     FROM issues
-    WHERE item_id = %s AND status = "issued"
+    WHERE item_id = %s AND status = 'issued'
     """, (item_id,))
     active = cur.fetchone()
 
@@ -359,7 +360,7 @@ def return_item(issue_id):
     SELECT issues.*, items.name
     FROM issues
     JOIN items ON items.id = issues.item_id
-    WHERE issues.id = %s AND issues.status = "issued"
+    WHERE issues.id = %s AND issues.status = 'issued'
     """, (issue_id,))
     issue = cur.fetchone()
 
